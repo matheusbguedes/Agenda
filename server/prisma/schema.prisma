@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(uuid())
+  name          String 
+  email         String        @unique
+  password      String
+  role          String
+  avatarUrl     String?
+  schedules  Scheduling[]
+}
+
+model Scheduling {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  appointmentDate DateTime
+  startTime     String
+  endTime       String
+  resourceUsed  String?  
+  roomUsed      String?  
+  isActive      Boolean  
+  createdAt     DateTime @default(now())
+}
+
