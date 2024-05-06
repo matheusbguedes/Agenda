@@ -1,10 +1,12 @@
 import Header from "@/components/header";
 import Schedule from "@/components/schedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toaster } from "react-hot-toast";
 
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-zinc-900">
+      <Toaster position="top-center" />
       <Header />
       <Tabs
         defaultValue="schedule"

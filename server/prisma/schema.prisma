@@ -21,7 +21,7 @@ model Scheduling {
   id            String   @id @default(uuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id])
-  appointmentDate DateTime
+  appointmentDate String
   startTime     String
   endTime       String
   resourceUsed  String?  

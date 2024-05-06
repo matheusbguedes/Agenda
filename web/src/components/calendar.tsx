@@ -24,14 +24,22 @@ import {
   isSameMonth,
   isToday,
   isWithinInterval,
+  parse,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Cookie from "js-cookie";
-import { CalendarX, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import {
+  CalendarPlus,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
@@ -41,6 +49,13 @@ export default function Calendar({ user }: { user: User }) {
 
   const startDay = startOfWeek(startOfMonth(baseDate));
   const endDay = endOfWeek(endOfMonth(baseDate));
+
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [roomUsed, setRoomUsed] = useState("");
+  const [resourceUsed, setResourceUsed] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const days = Array.from(
     { length: differenceInDays(endDay, startDay) + 1 },
@@ -83,38 +98,91 @@ export default function Calendar({ user }: { user: User }) {
   const onSubmit = async (data: any) => {
     const token = Cookie.get("token");
 
-    console.log({
-      userId: user.id,
-      appointmentDate: data.appointmentDate,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      resourceUsed: data.resourceUsed,
-      roomUsed: data.roomUsed,
-      isActive: true,
-    });
+    const convertDate = (date: string) => {
+      const parsedDate = parse(date, "dd/MM/yyyy", new Date());
+      return format(parsedDate, "yyyy-MM-dd");
+    };
 
-    await api.post(
-      "/schedule",
-      {
-        userId: user.id,
-        appointmentDate: data.appointmentDate,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        resourceUsed: data.resourceUsed,
-        roomUsed: data.roomUsed,
-        isActive: true,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+    if (!startTime) {
+      return toast.error("Selecione o horário de início!", {
+        style: {
+          background: "",
+          color: "",
         },
-      }
-    );
+        iconTheme: {
+          primary: "",
+          secondary: "",
+        },
+      });
+    }
+
+    if (!endTime) {
+      return toast.error("Selecione o horário de término!", {
+        style: {
+          background: "",
+          color: "",
+        },
+        iconTheme: {
+          primary: "",
+          secondary: "",
+        },
+      });
+    }
+
+    if (!roomUsed && !resourceUsed) {
+      return toast.error("Selecione uma sala ou recurso!", {
+        style: {
+          background: "",
+          color: "",
+        },
+        iconTheme: {
+          primary: "",
+          secondary: "",
+        },
+      });
+    }
+
+    try {
+      setIsLoading(true);
+      await api.post(
+        "/schedule",
+        {
+          userId: user.id,
+          appointmentDate: convertDate(data.appointmentDate),
+          startTime,
+          endTime,
+          resourceUsed,
+          roomUsed,
+          isActive: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } catch (e) {
+      console.log(e);
+      toast.error("Algo deu errado!", {
+        style: {
+          background: "",
+          color: "",
+        },
+        iconTheme: {
+          primary: "",
+          secondary: "",
+        },
+      });
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    }
   };
 
   return (
-    <div className="container flex flex-col gap-2">
+    <div className="container flex flex-col gap-2 mb-4">
       <div className="flex items-center gap-4">
         <Button
           size="icon"
@@ -162,7 +230,7 @@ export default function Calendar({ user }: { user: User }) {
             isToday(day!) ||
             isWithinInterval(day!, {
               start: new Date(),
-              end: addDays(new Date(), 14),
+              end: addDays(new Date(), 18),
             });
 
           const isCurrentMonth = isSameMonth(day!, baseDate);
@@ -202,15 +270,20 @@ export default function Calendar({ user }: { user: User }) {
                       </span>
                     </div>
                   ) : (
-                    <div className="w-full h-full flex justify-center items-center text-zinc-800">
-                      <CalendarX className="size-6" />
+                    <div className="w-full h-full flex flex-col text-zinc-800">
+                      <span className="w-full inline-flex justify-end items-center gap-1">
+                        <X className="size-3 text-red-600/40" />{" "}
+                        {format(day!, "dd")}
+                      </span>
                     </div>
                   )}
                 </div>
               </DialogTrigger>
               <DialogContent className="bg-zinc-900 border-none flex flex-col gap-3">
                 <DialogHeader>
-                  <DialogTitle className="text-zinc-400">Agendar</DialogTitle>
+                  <DialogTitle className="text-zinc-400 inline-flex items-center gap-2">
+                    Agendar <CalendarPlus className="size-4" />
+                  </DialogTitle>
                 </DialogHeader>
                 <form
                   onSubmit={handleSubmit(onSubmit)}
@@ -225,7 +298,7 @@ export default function Calendar({ user }: { user: User }) {
                   />
 
                   <div className="flex justify-center items-center gap-3">
-                    <Select {...register("startTime")}>
+                    <Select value={startTime} onValueChange={setStartTime}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Horário de início" />
                       </SelectTrigger>
@@ -239,7 +312,7 @@ export default function Calendar({ user }: { user: User }) {
                       </SelectContent>
                     </Select>
 
-                    <Select {...register("endTime")}>
+                    <Select value={endTime} onValueChange={setEndTime}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Horário de término" />
                       </SelectTrigger>
@@ -255,7 +328,7 @@ export default function Calendar({ user }: { user: User }) {
                   </div>
 
                   <div className="flex justify-center items-center gap-3">
-                    <Select {...register("resourceUsed")}>
+                    <Select value={roomUsed} onValueChange={setRoomUsed}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Recurso" />
                       </SelectTrigger>
@@ -264,7 +337,10 @@ export default function Calendar({ user }: { user: User }) {
                       </SelectContent>
                     </Select>
 
-                    <Select {...register("roomUsed")}>
+                    <Select
+                      value={resourceUsed}
+                      onValueChange={setResourceUsed}
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Sala" />
                       </SelectTrigger>
@@ -279,7 +355,14 @@ export default function Calendar({ user }: { user: User }) {
                     type="submit"
                     className="w-full hover:bg-zinc-950/80 bg-zinc-950 transition-colors"
                   >
-                    Agendar
+                    {isLoading ? (
+                      <div className="inline-flex gap-2 animate-pulse">
+                        Agendando
+                        <Loader2 className="size-5 animate-spin" />
+                      </div>
+                    ) : (
+                      "Agendar"
+                    )}
                   </Button>
                 </form>
               </DialogContent>

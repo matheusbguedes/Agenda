@@ -15,7 +15,7 @@ export async function schedulesRoutes(app: FastifyInstance) {
         endTime: schedule.endTime,
         resourceUsed: schedule.resourceUsed,
         roomUsed: schedule.roomUsed,
-        status: schedule.status,
+        isActive: schedule.isActive,
         createdAt: schedule.createdAt,
       };
     });
@@ -24,7 +24,7 @@ export async function schedulesRoutes(app: FastifyInstance) {
   app.post("/schedule", async (request, response) => {
     const bodySchema = z.object({
       userId: z.string(),
-      appointmentDate: z.date(),
+      appointmentDate: z.string().date(),
       startTime: z.string(),
       endTime: z.string(),
       resourceUsed: z.string().optional(),
