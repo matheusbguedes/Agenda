@@ -1,7 +1,5 @@
-import { getUser } from "@/lib/auth";
 import Calendar from "./calendar";
 
-export default function Schedule() {
-  const user = getUser();
+export default function Schedule({ user }: { user: User }) {
   return <Calendar user={user} />;
 }

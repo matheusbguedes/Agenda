@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/auth";
-import { LogOut } from "lucide-react";
+import { LogOut, User2 } from "lucide-react";
 import Image from "next/image";
 import logo from "/public/logo.svg";
 
@@ -20,14 +20,20 @@ export default function Header() {
           </a>
         </div>
 
-        <Image
-          src={user.avatarUrl}
-          width={200}
-          height={200}
-          draggable={false}
-          alt="profile-image"
-          className="size-11 rounded-full outline outline-2 outline-red-600"
-        />
+        {user.avatarUrl ? (
+          <Image
+            src={user.avatarUrl!}
+            width={200}
+            height={200}
+            draggable={false}
+            alt="profile-image"
+            className="size-11 rounded-full outline outline-2 outline-red-600"
+          />
+        ) : (
+          <div className="size-11 flex justify-center items-center rounded-full outline outline-2 outline-red-600">
+            <User2 className="size-6 text-red-600" />
+          </div>
+        )}
       </div>
     </header>
   );

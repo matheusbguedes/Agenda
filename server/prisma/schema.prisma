@@ -8,25 +8,34 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(uuid())
-  name          String 
-  email         String        @unique
-  password      String
-  role          String
-  avatarUrl     String?
-  schedules  Scheduling[]
+  id        String       @id @default(uuid())
+  name      String
+  email     String       @unique
+  password  String
+  role      String
+  avatarUrl String?
+  schedules Scheduling[]
 }
 
 model Scheduling {
-  id            String   @id @default(uuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  title           String?
   appointmentDate String
-  startTime     String
-  endTime       String
-  resourceUsed  String?  
-  roomUsed      String?  
-  isActive      Boolean  
-  createdAt     DateTime @default(now())
+  startTime       String
+  endTime         String
+  resourceUsed    String?
+  roomUsed        String?
+  createdAt       DateTime @default(now())
 }
 
+model Room {
+  id    String @id @default(uuid())
+  title String
+}
+
+model Resource {
+  id    String @id @default(uuid())
+  title String
+}

@@ -7,13 +7,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import {
   addDays,
@@ -24,24 +17,15 @@ import {
   isSameMonth,
   isToday,
   isWithinInterval,
-  parse,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Cookie from "js-cookie";
-import {
-  CalendarPlus,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Loader2,
-  X,
-} from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { Ban, ChevronLeftIcon, ChevronRightIcon, Circle } from "lucide-react";
+import { useEffect, useState } from "react";
+import NewSchedule from "./new-schedule";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
 export default function Calendar({ user }: { user: User }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -50,12 +34,7 @@ export default function Calendar({ user }: { user: User }) {
   const startDay = startOfWeek(startOfMonth(baseDate));
   const endDay = endOfWeek(endOfMonth(baseDate));
 
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [roomUsed, setRoomUsed] = useState("");
-  const [resourceUsed, setResourceUsed] = useState("");
-
-  const [isLoading, setIsLoading] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
 
   const days = Array.from(
     { length: differenceInDays(endDay, startDay) + 1 },
@@ -93,96 +72,24 @@ export default function Calendar({ user }: { user: User }) {
     );
   };
 
-  const { register, handleSubmit, reset } = useForm();
+  const token = Cookie.get("token");
 
-  const onSubmit = async (data: any) => {
-    const token = Cookie.get("token");
-
-    const convertDate = (date: string) => {
-      const parsedDate = parse(date, "dd/MM/yyyy", new Date());
-      return format(parsedDate, "yyyy-MM-dd");
-    };
-
-    if (!startTime) {
-      return toast.error("Selecione o horário de início!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
-      });
-    }
-
-    if (!endTime) {
-      return toast.error("Selecione o horário de término!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
-      });
-    }
-
-    if (!roomUsed && !resourceUsed) {
-      return toast.error("Selecione uma sala ou recurso!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
-      });
-    }
-
-    try {
-      setIsLoading(true);
-      await api.post(
-        "/schedule",
-        {
-          userId: user.id,
-          appointmentDate: convertDate(data.appointmentDate),
-          startTime,
-          endTime,
-          resourceUsed,
-          roomUsed,
-          isActive: true,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    } catch (e) {
-      console.log(e);
-      toast.error("Algo deu errado!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
-      });
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-    }
+  const getSchedules = async () => {
+    const response = await api.get("/schedules", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    setSchedules(response.data);
   };
 
+  useEffect(() => {
+    getSchedules();
+  });
+
   return (
-    <div className="container flex flex-col gap-2 mb-4">
+    <div className="container flex flex-col gap-2 mb-8">
       <div className="flex items-center gap-4">
         <Button
           size="icon"
@@ -235,6 +142,11 @@ export default function Calendar({ user }: { user: User }) {
 
           const isCurrentMonth = isSameMonth(day!, baseDate);
 
+          const dayFormatted = format(day!, "yyyy-MM-dd");
+          const daySchedules = schedules?.filter(
+            (schedule) => schedule.appointmentDate === dayFormatted
+          );
+
           return (
             <Dialog key={index}>
               <DialogTrigger disabled={!isSelectable}>
@@ -255,13 +167,12 @@ export default function Calendar({ user }: { user: User }) {
                     }
                   }}
                 >
+                  {/* days */}
                   {isToday(day!) ? (
-                    <div className="flex flex-col justify-center items-center gap-2">
-                      <div className="w-full inline-flex justify-end">
-                        <span className="size-10 flex justify-center items-center p-1 rounded-full font-medium text-red-600 border-2 border-red-600">
-                          {format(day!, "dd")}
-                        </span>
-                      </div>
+                    <div className="w-full inline-flex justify-end">
+                      <span className="size-10 flex justify-center items-center p-1 rounded-full font-medium text-red-600 border-2 border-red-600">
+                        {format(day!, "dd")}
+                      </span>
                     </div>
                   ) : isSelectable ? (
                     <div className="flex flex-col justify-center items-center gap-2">
@@ -270,10 +181,40 @@ export default function Calendar({ user }: { user: User }) {
                       </span>
                     </div>
                   ) : (
-                    <div className="w-full h-full flex flex-col text-zinc-800">
-                      <span className="w-full inline-flex justify-end items-center gap-1">
-                        <X className="size-3 text-red-600/40" />{" "}
+                    <div className="w-full flex flex-col text-zinc-800">
+                      <span className="w-full inline-flex justify-end items-center gap-2">
+                        <Ban className="size-4 text-red-600/40" />
                         {format(day!, "dd")}
+                      </span>
+                    </div>
+                  )}
+                  {/* schedules */}
+                  {isSelectable &&
+                    daySchedules.slice(0, 2).map((schedule, i) => (
+                      <div
+                        key={schedule.id}
+                        className={`w-full flex items-center gap-2 text-sm ${
+                          schedule.title ? "text-zinc-400" : "text-zinc-600"
+                        }`}
+                      >
+                        <Circle
+                          className="size-2 text-red-600"
+                          fill="#DC2626"
+                        />
+                        {schedule.title.length > 26
+                          ? schedule.title.substring(0, 26 - 3) + "..."
+                          : schedule.title
+                          ? schedule.title
+                          : "Sem título"}
+                      </div>
+                    ))}
+                  {isSelectable && daySchedules.length > 2 && (
+                    <div className="w-full flex items-center gap-2 text-xs text-zinc-400 mt-1">
+                      <span className="text-sm text-red-600 font-medium">
+                        + {daySchedules.length - 2}{" "}
+                        {daySchedules.length - 2 > 1
+                          ? "agendamentos"
+                          : "agendamento"}
                       </span>
                     </div>
                   )}
@@ -281,90 +222,15 @@ export default function Calendar({ user }: { user: User }) {
               </DialogTrigger>
               <DialogContent className="bg-zinc-900 border-none flex flex-col gap-3">
                 <DialogHeader>
-                  <DialogTitle className="text-zinc-400 inline-flex items-center gap-2">
-                    Agendar <CalendarPlus className="size-4" />
+                  <DialogTitle className="text-zinc-500 inline-flex items-center gap-2">
+                    Novo agendamento em{" "}
+                    {format(selectedDate, "dd 'de' MMMM", {
+                      locale: ptBR,
+                    })}
                   </DialogTitle>
                 </DialogHeader>
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="mt-2 flex flex-col gap-3"
-                >
-                  <Input
-                    readOnly
-                    type="text"
-                    value={selectedDate.toLocaleDateString()}
-                    placeholder="Data de agendamento"
-                    {...register("appointmentDate")}
-                  />
 
-                  <div className="flex justify-center items-center gap-3">
-                    <Select value={startTime} onValueChange={setStartTime}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Horário de início" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1º aula</SelectItem>
-                        <SelectItem value="2">2º aula</SelectItem>
-                        <SelectItem value="3">3º aula</SelectItem>
-                        <SelectItem value="4">4º aula</SelectItem>
-                        <SelectItem value="5">5º aula</SelectItem>
-                        <SelectItem value="6">6º aula</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={endTime} onValueChange={setEndTime}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Horário de término" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1º aula</SelectItem>
-                        <SelectItem value="2">2º aula</SelectItem>
-                        <SelectItem value="3">3º aula</SelectItem>
-                        <SelectItem value="4">4º aula</SelectItem>
-                        <SelectItem value="5">5º aula</SelectItem>
-                        <SelectItem value="6">6º aula</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex justify-center items-center gap-3">
-                    <Select value={roomUsed} onValueChange={setRoomUsed}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Recurso" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="nivonei">Sala nivonei</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      value={resourceUsed}
-                      onValueChange={setResourceUsed}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sala" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Notbook">Notbook</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button
-                    variant="default"
-                    type="submit"
-                    className="w-full hover:bg-zinc-950/80 bg-zinc-950 transition-colors"
-                  >
-                    {isLoading ? (
-                      <div className="inline-flex gap-2 animate-pulse">
-                        Agendando
-                        <Loader2 className="size-5 animate-spin" />
-                      </div>
-                    ) : (
-                      "Agendar"
-                    )}
-                  </Button>
-                </form>
+                <NewSchedule user={user} selectedDate={selectedDate} />
               </DialogContent>
             </Dialog>
           );
