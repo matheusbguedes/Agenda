@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 
 export async function schedulesRoutes(app: FastifyInstance) {
-  app.get("/schedules", async (request) => {
+  app.get("/", async (request) => {
     const schedules = await prisma.scheduling.findMany({
       include: {
         user: true,
@@ -26,16 +26,16 @@ export async function schedulesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/schedules/:userId", async (request) => {
+  app.get("/user/:id", async (request) => {
     const paramsSchema = z.object({
-      userId: z.string().uuid(),
+      id: z.string().uuid(),
     });
 
-    const { userId } = paramsSchema.parse(request.params);
+    const { id } = paramsSchema.parse(request.params);
 
     const schedules = await prisma.scheduling.findMany({
       where: {
-        userId,
+        userId: id,
       },
       include: {
         user: true,
@@ -61,7 +61,7 @@ export async function schedulesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/schedule", async (request, response) => {
+  app.post("/", async (request, response) => {
     const bodySchema = z.object({
       userId: z.string(),
       appointmentDate: z.string().date(),
@@ -97,7 +97,7 @@ export async function schedulesRoutes(app: FastifyInstance) {
     return schedule;
   });
 
-  app.delete("/schedule/:id", async (request, reply) => {
+  app.delete("/:id", async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
     });
@@ -108,6 +108,32 @@ export async function schedulesRoutes(app: FastifyInstance) {
       where: {
         id,
       },
+    });
+  });
+
+  app.get("/coordination", async (request) => {
+    const schedules = await prisma.scheduling.findMany({
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return schedules.map((schedule) => {
+      return {
+        id: schedule.id,
+        userId: schedule.userId,
+        userName: schedule.user.name,
+        appointmentDate: schedule.appointmentDate,
+        title: schedule.title,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        resourceUsed: schedule.resourceUsed,
+        roomUsed: schedule.roomUsed,
+        createdAt: schedule.createdAt,
+      };
     });
   });
 }

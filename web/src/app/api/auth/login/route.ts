@@ -1,11 +1,8 @@
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-
-  const email = searchParams.get("email");
-  const password = searchParams.get("password");
+export async function POST(request: NextRequest) {
+  const { email, password } = await request.json();
 
   const redirectTo = request.cookies.get("redirectTo")?.value;
 

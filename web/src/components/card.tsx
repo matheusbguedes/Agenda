@@ -1,7 +1,6 @@
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Cookie from "js-cookie";
 import {
   BrickWall,
   Calendar,
@@ -28,21 +27,10 @@ export default function Card({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const token = Cookie.get("token");
-
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await api.delete(
-        `/schedule/${schedule.id}`,
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await api.delete(`/schedule/${schedule.id}`);
     } catch (e) {
     } finally {
       setIsLoading(false);
@@ -52,7 +40,7 @@ export default function Card({
   return (
     <div
       key={schedule.id}
-      className="flex flex-col justify-between gap-1 border-2 border-zinc-800 border-l-red-600 rounded-md relative"
+      className="flex flex-col justify-between gap-1 border-2 border-zinc-800 border-l-4 border-l-red-600 rounded-l-sm rounded-md relative"
     >
       <div className="w-full flex flex-col p-3 gap-2">
         <div
@@ -124,12 +112,6 @@ export default function Card({
       <div className="w-full flex flex-col items-center border-t-2 border-zinc-800 p-2 gap-2">
         <div className="w-full flex gap-2">
           <div className="w-full h-10 flex justify-center items-center border-2 border-zinc-800 px-3 gap-2 rounded-md">
-            <Clock className="size-4 text-red-600" />
-            <p className="text-zinc-400 text-sm text-nowrap">
-              {schedule.startTime}º aula - {schedule.endTime}º aula
-            </p>
-          </div>
-          <div className="w-full h-10 flex justify-center items-center border-2 border-zinc-800 px-3 gap-2 rounded-md">
             <Calendar className="size-4 text-red-600" />
             <p className="text-zinc-400 text-sm text-nowrap">
               {format(appointmentDate, "dd 'de' MMMM", {
@@ -137,28 +119,13 @@ export default function Card({
               })}
             </p>
           </div>
-        </div>
-
-        {/* {active && (
-          <div className="w-full flex gap-2">
-            <Button className="w-full bg-zinc-900 text-zinc-700 hover:text-red-600 hover:bg-red-600/20">
-              <Pencil className="size-4 mr-2" />
-              Editar
-            </Button>
-            <Button
-              onClick={handleDelete}
-              className="w-full bg-zinc-900 text-zinc-700 hover:text-red-600 hover:bg-red-600/20"
-            >
-              {isLoading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <>
-                  <Trash className="size-4 mr-2" /> Excluir
-                </>
-              )}
-            </Button>
+          <div className="w-full h-10 flex justify-center items-center border-2 border-zinc-800 px-3 gap-2 rounded-md">
+            <Clock className="size-4 text-red-600" />
+            <p className="text-zinc-400 text-sm text-nowrap">
+              {schedule.startTime}º aula - {schedule.endTime}º aula
+            </p>
           </div>
-        )} */}
+        </div>
       </div>
     </div>
   );

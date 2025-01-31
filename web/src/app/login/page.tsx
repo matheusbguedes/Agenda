@@ -44,12 +44,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const params = {
-        email,
-        password,
-      };
-
-      await axios.get("/api/auth/login", { params });
+      await axios.post("/api/auth/login", { email, password });
       router.push("/");
     } catch (e) {
       return toast.error("Usuário ou senha incorreto!", {
@@ -63,7 +58,6 @@ export default function Login() {
         },
       });
     } finally {
-      reset();
       setIsLoading(false);
     }
   };

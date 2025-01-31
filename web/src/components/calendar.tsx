@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import {
   addDays,
   differenceInDays,
@@ -21,7 +21,6 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Cookie from "js-cookie";
 import { Ban, ChevronLeftIcon, ChevronRightIcon, Circle } from "lucide-react";
 import { useEffect, useState } from "react";
 import NewSchedule from "./new-schedule";
@@ -72,21 +71,18 @@ export default function Calendar({ user }: { user: User }) {
     );
   };
 
-  const token = Cookie.get("token");
-
   const getSchedules = async () => {
-    const response = await api.get("/schedules", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    setSchedules(response.data);
+    try {
+      const { data } = await api.get("/schedule");
+      setSchedules(data);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   useEffect(() => {
     getSchedules();
-  });
+  }, []);
 
   return (
     <div className="container flex flex-col gap-2 mb-8">

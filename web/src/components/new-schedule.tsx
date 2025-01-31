@@ -7,10 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import { format, parse } from "date-fns";
-import Cookie from "js-cookie";
-import { Loader2 } from "lucide-react";
+import { Dot, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -27,12 +26,34 @@ export default function NewSchedule({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [roomUsed, setRoomUsed] = useState("");
-  const [resourceUsed, setResourceUsed] = useState("");
+  const [resources, setResources] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, reset } = useForm();
-  const token = Cookie.get("token");
+
+  const addResource = () => {
+    if (resources.length < 3) {
+      setResources([...resources, ""]);
+    } else {
+      toast.error("Máximo de 3 recursos permitidos!", {
+        style: {
+          background: "#FF6B6B",
+          color: "white",
+        },
+      });
+    }
+  };
+
+  const removeResource = (indexToRemove: number) => {
+    setResources(resources.filter((_, index) => index !== indexToRemove));
+  };
+
+  const updateResource = (index: number, value: string) => {
+    const newResources = [...resources];
+    newResources[index] = value;
+    setResources(newResources);
+  };
 
   const onSubmit = async (data: any) => {
     const convertDate = (date: string) => {
@@ -42,76 +63,47 @@ export default function NewSchedule({
 
     if (!startTime) {
       return toast.error("Selecione o horário de início!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
+        style: { background: "#FF6B6B", color: "white" },
       });
     }
 
     if (!endTime) {
       return toast.error("Selecione o horário de término!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
+        style: { background: "#FF6B6B", color: "white" },
       });
     }
 
-    if (!roomUsed && !resourceUsed) {
+    const filteredResources = resources.filter(
+      (resource) => resource.trim() !== ""
+    );
+
+    if (!roomUsed && filteredResources.length === 0) {
       return toast.error("Selecione um ambiente ou recurso!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
+        style: { background: "#FF6B6B", color: "white" },
       });
     }
 
     try {
       setIsLoading(true);
-      await api.post(
-        "/schedule",
-        {
-          userId: user.id,
-          appointmentDate: convertDate(data.appointmentDate),
-          title: data.title,
-          startTime,
-          endTime,
-          resourceUsed,
-          roomUsed,
-          isActive: true,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await api.post("/schedule", {
+        userId: user.id,
+        appointmentDate: convertDate(data.appointmentDate),
+        title: data.title,
+        startTime,
+        endTime,
+        resourceUsed: filteredResources.join(", "),
+        roomUsed,
+        isActive: true,
+      });
       reset();
+      setResources([]);
+      setStartTime("");
+      setEndTime("");
+      setRoomUsed("");
     } catch (e) {
       console.log(e);
       toast.error("Algo deu errado!", {
-        style: {
-          background: "",
-          color: "",
-        },
-        iconTheme: {
-          primary: "",
-          secondary: "",
-        },
+        style: { background: "#FF6B6B", color: "white" },
       });
     } finally {
       setTimeout(() => {
@@ -123,7 +115,7 @@ export default function NewSchedule({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-2 flex flex-col gap-3"
+      className="mt-2 flex flex-col gap-3 py-3"
     >
       <Input
         hidden
@@ -140,12 +132,71 @@ export default function NewSchedule({
             <SelectValue placeholder="Horário de início" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">1º aula</SelectItem>
-            <SelectItem value="2">2º aula</SelectItem>
-            <SelectItem value="3">3º aula</SelectItem>
-            <SelectItem value="4">4º aula</SelectItem>
-            <SelectItem value="5">5º aula</SelectItem>
-            <SelectItem value="6">6º aula</SelectItem>
+            <SelectContent>
+              <SelectItem value="1">
+                <div className="flex items-center gap-1 text-white">
+                  1º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">07:00</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="2">
+                <div className="flex items-center gap-1 text-white">
+                  2º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">07:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="3">
+                <div className="flex items-center gap-1 text-white">
+                  3º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">08:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="4">
+                <div className="flex items-center gap-1 text-white">
+                  4º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">09:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="5">
+                <div className="flex items-center gap-1 text-white">
+                  5º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">10:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="6">
+                <div className="flex items-center gap-1 text-white">
+                  6º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">11:30</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="7">
+                <div className="flex items-center gap-1 text-white">
+                  7º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">13:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="8">
+                <div className="flex items-center gap-1 text-white">
+                  8º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">14:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="9">
+                <div className="flex items-center gap-1 text-white">
+                  9º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">15:30</p>
+                </div>
+              </SelectItem>
+            </SelectContent>
           </SelectContent>
         </Select>
 
@@ -154,12 +205,71 @@ export default function NewSchedule({
             <SelectValue placeholder="Horário de término" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">1º aula</SelectItem>
-            <SelectItem value="2">2º aula</SelectItem>
-            <SelectItem value="3">3º aula</SelectItem>
-            <SelectItem value="4">4º aula</SelectItem>
-            <SelectItem value="5">5º aula</SelectItem>
-            <SelectItem value="6">6º aula</SelectItem>
+            <SelectContent>
+              <SelectItem value="1">
+                <div className="flex items-center gap-1 text-white">
+                  1º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">07:00</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="2">
+                <div className="flex items-center gap-1 text-white">
+                  2º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">07:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="3">
+                <div className="flex items-center gap-1 text-white">
+                  3º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">08:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="4">
+                <div className="flex items-center gap-1 text-white">
+                  4º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">09:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="5">
+                <div className="flex items-center gap-1 text-white">
+                  5º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">10:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="6">
+                <div className="flex items-center gap-1 text-white">
+                  6º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">11:30</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="7">
+                <div className="flex items-center gap-1 text-white">
+                  7º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">13:50</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="8">
+                <div className="flex items-center gap-1 text-white">
+                  8º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">14:40</p>
+                </div>
+              </SelectItem>
+              <SelectItem value="9">
+                <div className="flex items-center gap-1 text-white">
+                  9º aula
+                  <Dot color="#52525b" size={24} />
+                  <p className="text-zinc-600">15:30</p>
+                </div>
+              </SelectItem>
+            </SelectContent>
           </SelectContent>
         </Select>
       </div>
@@ -173,16 +283,44 @@ export default function NewSchedule({
             <SelectItem value="nivonei">Nivonei</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select value={resourceUsed} onValueChange={setResourceUsed}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Recurso" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Notbook">Notbook</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
+
+      {resources.map((resource, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <Select
+            value={resource}
+            onValueChange={(value) => updateResource(index, value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Recurso" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Notbook">Notbook</SelectItem>
+              <SelectItem value="TV">TV</SelectItem>
+              <SelectItem value="Projetor">Projetor</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="ghost"
+            className="hover:bg-zinc-950/20"
+            size="icon"
+            onClick={() => removeResource(index)}
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      ))}
+
+      {resources.length < 3 && (
+        <Button
+          type="button"
+          className="w-full hover:bg-zinc-950/40 bg-zinc-900 transition-colors"
+          onClick={addResource}
+        >
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Recurso
+        </Button>
+      )}
 
       <Button
         variant="default"
