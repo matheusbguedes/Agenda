@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 
 export async function schedulesRoutes(app: FastifyInstance) {
-  app.get("/", async (request) => {
+  app.get("/", async () => {
     const schedules = await prisma.scheduling.findMany({
       include: {
         user: true,
@@ -13,15 +13,15 @@ export async function schedulesRoutes(app: FastifyInstance) {
     return schedules.map((schedule) => {
       return {
         id: schedule.id,
-        userId: schedule.userId,
-        userName: schedule.user.name,
+        user_id: schedule.user_id,
+        user_name: schedule.user.name,
         title: schedule.title,
-        appointmentDate: schedule.appointmentDate,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        resourceUsed: schedule.resourceUsed,
-        roomUsed: schedule.roomUsed,
-        createdAt: schedule.createdAt,
+        appointment_date: schedule.appointment_date,
+        start_time: schedule.start_time,
+        end_time: schedule.end_time,
+        resource_id: schedule.resource_id,
+        room_id: schedule.room_id,
+        created_at: schedule.created_at,
       };
     });
   });
@@ -35,33 +35,33 @@ export async function schedulesRoutes(app: FastifyInstance) {
 
     const schedules = await prisma.scheduling.findMany({
       where: {
-        userId: id,
+        user_id: id,
       },
       include: {
         user: true,
       },
       orderBy: {
-        createdAt: "desc",
+        created_at: "desc",
       },
     });
 
     return schedules.map((schedule) => {
       return {
         id: schedule.id,
-        userId: schedule.userId,
-        userName: schedule.user.name,
-        appointmentDate: schedule.appointmentDate,
+        user_id: schedule.user_id,
+        user_name: schedule.user.name,
+        appointment_date: schedule.appointment_date,
         title: schedule.title,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        resourceUsed: schedule.resourceUsed,
-        roomUsed: schedule.roomUsed,
-        createdAt: schedule.createdAt,
+        start_time: schedule.start_time,
+        end_time: schedule.end_time,
+        resource_id: schedule.resource_id,
+        room_id: schedule.room_id,
+        created_at: schedule.created_at,
       };
     });
   });
 
-  app.post("/", async (request, response) => {
+  app.post("/", async (request) => {
     const bodySchema = z.object({
       userId: z.string(),
       appointmentDate: z.string().date(),
@@ -84,20 +84,20 @@ export async function schedulesRoutes(app: FastifyInstance) {
 
     const schedule = await prisma.scheduling.create({
       data: {
-        userId,
-        appointmentDate,
+        user_id: userId,
+        appointment_date: appointmentDate,
         title,
-        startTime,
-        endTime,
-        resourceUsed,
-        roomUsed,
+        start_time: startTime,
+        end_time: endTime,
+        resource_id: resourceUsed,
+        room_id: roomUsed,
       },
     });
 
     return schedule;
   });
 
-  app.delete("/:id", async (request, reply) => {
+  app.delete("/:id", async (request) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
     });
@@ -108,32 +108,6 @@ export async function schedulesRoutes(app: FastifyInstance) {
       where: {
         id,
       },
-    });
-  });
-
-  app.get("/coordination", async (request) => {
-    const schedules = await prisma.scheduling.findMany({
-      include: {
-        user: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return schedules.map((schedule) => {
-      return {
-        id: schedule.id,
-        userId: schedule.userId,
-        userName: schedule.user.name,
-        appointmentDate: schedule.appointmentDate,
-        title: schedule.title,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        resourceUsed: schedule.resourceUsed,
-        roomUsed: schedule.roomUsed,
-        createdAt: schedule.createdAt,
-      };
     });
   });
 }

@@ -24,7 +24,7 @@ export async function authRoutes(app: FastifyInstance) {
         name: user.name,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl,
+        avatar_url: user.avatar_url,
       },
       {
         sub: user.id,

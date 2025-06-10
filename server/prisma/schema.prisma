@@ -3,39 +3,62 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String       @id @default(uuid())
-  name      String
-  email     String       @unique
-  password  String
-  role      String
-  avatarUrl String?
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  role       String
+  avatar_url String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   schedules Scheduling[]
+
+  @@map("users")
 }
 
 model Scheduling {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  title           String?
-  appointmentDate String
-  startTime       String
-  endTime         String
-  resourceUsed    String?
-  roomUsed        String?
-  createdAt       DateTime @default(now())
+  id               String   @id @default(uuid())
+  user_id          String
+  title            String?
+  appointment_date String
+  start_time       String
+  end_time         String
+  resource_id      String?
+  room_id          String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user     User      @relation(fields: [user_id], references: [id])
+  room     Room?     @relation(fields: [room_id], references: [id])
+  resource Resource? @relation(fields: [resource_id], references: [id])
+
+  @@map("schedulings")
 }
 
 model Room {
-  id    String @id @default(uuid())
-  title String
+  id         String   @id @default(uuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  scheduling Scheduling[]
+
+  @@map("rooms")
 }
 
 model Resource {
-  id    String @id @default(uuid())
-  title String
+  id         String   @id @default(uuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  scheduling Scheduling[]
+
+  @@map("resources")
 }
